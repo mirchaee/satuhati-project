@@ -46,11 +46,11 @@ SATUHATI uses a Calm UI approach with soft pastel colors and emotional design pr
 
 ## 👥 Team Members
 
-- Muhammad Fawwaz Bazily
-- Muhammad Fahmi Yakhsya
-- Roniarta Sibarani
-- Rizaldi Arydian Febriyanto
-- Marvin Ligarta
+- Muhammad Fawwaz Bazily - 245150201111005
+- Muhammad Fahmi Yakhsya - 245150200111011
+- Roniarta Sibarani - 245150200111036
+- Rizaldi Arydian Febriyanto - 245150201111026
+- Marvin Ligarta - 245150200111063
 
 ---
 
