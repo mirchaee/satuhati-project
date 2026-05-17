@@ -57,7 +57,7 @@ SATUHATI uses a Calm UI approach with soft pastel colors and emotional design pr
 ## 🔗 Prototype
 
 Figma Prototype:
-https://www.figma.com/
+https://www.figma.com/design/cI2xyzbgBh7gVGN1L0XI4H/Redesign-SatuHati?node-id=0-1&t=tSmoVv8htgmlSEL8-1 
 
 ---
 
