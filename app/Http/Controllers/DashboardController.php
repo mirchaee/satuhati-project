@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\SyncData;
@@ -16,39 +15,68 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
+        // ════════════════════════════════════════
+        // DASHBOARD ISTRI
+        // ════════════════════════════════════════
         if ($user->role === 'istri') {
-            return view('wife.dashboard'); 
+            return view('wife.dashboard', [
+                'user'             => $user,
+                'isPaired'         => $user->isPaired(),
+                'partner'          => $user->getPairedPartner(),
+                'fetalData'        => $user->getFetalData(),
+                'pregnancyWeek'    => $user->getCurrentPregnancyWeek(),
+                'latestAssessment' => $user->healthAssessments()->first(),
+                'todayDiary'       => $user->diaryEntries()
+                                           ->whereDate('entry_date', today())
+                                           ->first(),
+            ]);
         }
 
         // ════════════════════════════════════════
-        // LOGIKA UNTUK SUAMI 
+        // DASHBOARD SUAMI
         // ════════════════════════════════════════
         $sync = SyncData::where('husband_id', $user->id)
                         ->where('status', true)
                         ->first();
 
-        $wife = null;
+        $wife             = null;
         $latestAssessment = null;
-        $missions = collect();
-        $guidance = null;
+        $missions         = collect();
+        $guidance         = null;
+        $pregnancyWeek    = 0;
 
         if ($sync) {
             $wife = User::find($sync->wife_id);
 
             if ($wife) {
+                $pregnancyWeek = $wife->getCurrentPregnancyWeek();
+
                 $latestAssessment = HealthAssessment::where('user_id', $wife->id)
                                                     ->with('symptoms')
                                                     ->latest()
                                                     ->first();
 
-                $missions = DailyMission::where('week', $wife->pregnancy_week)->get();
+                // Gunakan nama kolom yang sesuai migration
+                $missions = DailyMission::where('user_id', $user->id)
+                                        ->where('target_week', $pregnancyWeek)
+                                        ->whereDate('mission_date', today())
+                                        ->get();
 
-                $guidance = EducationalContent::where('min_age_weeks', '<=', $wife->pregnancy_week)
-                                              ->where('max_age_weeks', '>=', $wife->pregnancy_week)
+                // Gunakan nama kolom yang sesuai migration
+                $guidance = EducationalContent::where('week_start', '<=', $pregnancyWeek)
+                                              ->where('week_end', '>=', $pregnancyWeek)
+                                              ->where('is_active', true)
                                               ->first();
             }
         }
 
-        return view('husband.dashboard', compact('wife', 'latestAssessment', 'missions', 'guidance'));
+        return view('husband.dashboard', compact(
+            'user',
+            'wife',
+            'latestAssessment',
+            'missions',
+            'guidance',
+            'pregnancyWeek'
+        ));
     }
 }
