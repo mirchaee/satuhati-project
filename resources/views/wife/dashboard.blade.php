@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Dashboard Suami</title>
+    <title>Dashboard Istri</title>
 </head>
 <body>
 
-    <h1>Dashboard Suami</h1>
+    <h1>Dashboard Istri</h1>
 
     <p>Halo, {{ $user->name }}</p>
 
@@ -16,6 +16,6 @@
             Keluar
 
     </a>
-
+    
 </body>
 </html>

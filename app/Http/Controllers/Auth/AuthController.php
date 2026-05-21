@@ -32,12 +32,6 @@ class AuthController extends Controller
             'phone'    => 'nullable|string|max:20',
         ];
 
-        // Validasi tambahan khusus istri
-        if ($request->role === 'istri') {
-            $rules['pregnancy_week'] = 'required|integer|min:1|max:42';
-            $rules['hpht']           = 'required|date|before:today';
-        }
-
         $data = $request->validate($rules);
 
         // Buat user baru
@@ -49,8 +43,6 @@ class AuthController extends Controller
                 'password'       => Hash::make($data['password']),
                 'role'           => $data['role'],
                 'phone'          => $data['phone'] ?? null,
-                'pregnancy_week' => $data['pregnancy_week'] ?? null,
-                'hpht'           => $data['hpht'] ?? null,
             ]);
 
             // 2. Buat SyncData khusus istri
