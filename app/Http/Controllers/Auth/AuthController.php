@@ -26,43 +26,34 @@ class AuthController extends Controller
     {
         $rules = [
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users',
-            'password' => 'required|min:6|confirmed',
-            'role'     => 'required|in:istri,suami',
+            'email'    => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'role'     => 'required|string|in:suami,istri',
             'phone'    => 'nullable|string|max:20',
         ];
 
+        // KEMBALIKAN VALIDASI KHUSUS ISTRI (Jangan Dihapus)
+        if ($request->role === 'istri') {
+            $rules['pregnancy_week'] = 'required|integer|min:1|max:42';
+            $rules['hpht']           = 'required|date|before:today';
+        }
+
         $data = $request->validate($rules);
 
-        // Buat user baru
-        $user = DB::transaction(function () use ($data) {
-            // 1. Buat user baru
-            $newUser = User::create([
-                'name'           => $data['name'],
-                'email'          => $data['email'],
-                'password'       => Hash::make($data['password']),
-                'role'           => $data['role'],
-                'phone'          => $data['phone'] ?? null,
-            ]);
+        // Buat user baru dengan data yang lengkap
+        $user = \App\Models\User::create([
+            'name'           => $data['name'],
+            'email'          => $data['email'],
+            'password'       => \Illuminate\Support\Facades\Hash::make($data['password']),
+            'role'           => $data['role'],
+            'phone'          => $data['phone'] ?? null,
+            'pregnancy_week' => $data['role'] === 'istri' ? $data['pregnancy_week'] : null,
+            'hpht'           => $data['role'] === 'istri' ? $data['hpht'] : null,
+        ]);
 
-            // 2. Buat SyncData khusus istri
-            if ($newUser->role === 'istri') {
-                SyncData::create([
-                    'wife_id'      => $newUser->id,
-                    'husband_id'   => null,
-                    'pairing_code' => SyncData::generateCode(),
-                    'status'       => false,
-                ]);
-            }
+        \Illuminate\Support\Facades\Auth::login($user);
 
-            return $newUser;
-        });
-
-        // Langsung loginkan setelah transaksi berhasil
-        Auth::login($user);
-
-        return redirect()->route('dashboard')
-                         ->with('success', "Selamat datang, {$user->name}! 🌸");
+        return redirect()->route('dashboard');
     }
 
     // ════════════════════════════════════════
