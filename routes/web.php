@@ -6,7 +6,9 @@ use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 // ── Root ────────────────────────────────────────
-Route::get('/', fn() => redirect()->route('login'));
+Route::get('/', function () {
+    return view('landing');
+});
 
 // ── Auth (hanya untuk tamu / belum login) ───────
 Route::middleware('guest')->group(function () {
@@ -94,5 +96,18 @@ Route::get('/test-api', function () {
             'framework' => 'Laravel'
         ]
     ]);
+
+});
+
+
+
+
+//ini nanti ubah aja nggapapa, cuman buat sementara biar gampang logoutnya, soalnya kalo pake post kan harus bikin form segala, jadi ini aja dulu
+
+Route::get('/logout', function () {
+
+    Auth::logout();
+
+    return redirect('/');
 
 });
