@@ -3,6 +3,7 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Str;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'password',
         'role', 'pregnancy_week', 'hpht',
-        'phone', 'avatar',
+        'phone', 'avatar', 'pairing_code',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -24,6 +25,14 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function ($user) {
+            if ($user->role === 'istri') {
+                $user->pairing_code = 'SH-' . strtoupper(Str::random(6));
+            }
+        });
+    }
     // ════════════════════════════════════════
     //  RELATIONSHIPS
     // ════════════════════════════════════════

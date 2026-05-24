@@ -4,6 +4,8 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\SyncController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth; // TAMBAHKAN INI
+use Illuminate\Support\Facades\Broadcast; // TAMBAHKAN INI
 
 // ── Root ────────────────────────────────────────
 Route::get('/', function () {
@@ -45,19 +47,21 @@ Route::middleware('auth')->group(function () {
              ->name('disconnect');
     });
 
-    // ── Fitur lain (untuk dikerjakan anggota lain) ──
-    // Routes di bawah ini kamu buat sekarang agar
-    // anggota lain tinggal bikin controllernya
-
     // Anggota 3 — Modul Istri
-    Route::middleware('role:istri')->group(function () {
-        Route::get('/assessment', fn() => view('wife.assessment'))
-             ->name('assessment.index');
-        Route::post('/assessment', [\App\Http\Controllers\AssessmentController::class, 'store'])
-             ->name('assessment.store');
-        Route::get('/health-summary', [\App\Http\Controllers\AssessmentController::class, 'summary'])
-             ->name('assessment.summary');
-    });
+     Route::middleware('role:istri')->group(function () {
+     Route::get('/assessment', [\App\Http\Controllers\AssessmentController::class, 'index'])
+         ->name('wife.assessment'); 
+
+     Route::post('/assessment', [\App\Http\Controllers\AssessmentController::class, 'store'])
+          ->name('wife.assessment.store');
+         
+     Route::get('/health-summary', [\App\Http\Controllers\AssessmentController::class, 'summary'])
+         ->name('wife.health-summary'); 
+     
+     Route::get('/settings', function() {
+          return "Halaman Settings Bunda (Dalam Pengembangan)";
+     })->name('wife.settings');
+     });
 
     // Anggota 4 — Modul Suami
     Route::middleware('role:suami')->group(function () {
@@ -80,10 +84,10 @@ Route::middleware('auth')->group(function () {
          ->name('emergency.trigger');
 });
 
-// ── Broadcasting Auth (Pusher private channel) ──
+// ── Broadcasting Auth ──
 Route::post('/broadcasting/auth', function () {
-    return \Illuminate\Support\Facades\Auth::check()
-        ? broadcast()->auth(request())
+    return Auth::check()
+        ? Broadcast::auth(request()) // FIX: Gunakan Broadcast Facade
         : abort(403);
 })->middleware('auth');
 
@@ -96,18 +100,10 @@ Route::get('/test-api', function () {
             'framework' => 'Laravel'
         ]
     ]);
-
 });
 
-
-
-
-//ini nanti ubah aja nggapapa, cuman buat sementara biar gampang logoutnya, soalnya kalo pake post kan harus bikin form segala, jadi ini aja dulu
-
+// Shortcut Logout (Sesuai kode awal)
 Route::get('/logout', function () {
-
     Auth::logout();
-
     return redirect('/');
-
 });

@@ -8,6 +8,7 @@ use App\Models\SyncData;
 use App\Models\HealthAssessment;
 use App\Models\DailyMission;
 use App\Models\EducationalContent;
+use App\Models\Symptom; // TAMBAHKAN INI UNTUK FIX UNDEFINED TYPE SYMPTOM
 
 class DashboardController extends Controller
 {
@@ -15,23 +16,19 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        // ════════════════════════════════════════
-        // DASHBOARD ISTRI
-        // ════════════════════════════════════════
         if ($user->role === 'istri') {
+            $pregnancyWeek = $user->getCurrentPregnancyWeek();
+            $fetalData = $user->getFetalData(); // Mengambil array [size, weight, length]
+
             return view('wife.dashboard', [
-                'user'             => $user,
-                'isPaired'         => $user->isPaired(),
-                'partner'          => $user->getPairedPartner(),
-                'fetalData'        => $user->getFetalData(),
-                'pregnancyWeek'    => $user->getCurrentPregnancyWeek(),
-                'latestAssessment' => $user->healthAssessments()->first(),
-                'todayDiary'       => $user->diaryEntries()
-                                           ->whereDate('entry_date', today())
-                                           ->first(),
+                'user'           => $user,
+                'pregnancy_week' => $pregnancyWeek,
+                'fetalData'      => $fetalData, // Kirim ke view
+                'isPaired'       => $user->isPaired(),
+                // ... data lainnya (mood, water, dll)
             ]);
         }
-
+        
         // ════════════════════════════════════════
         // DASHBOARD SUAMI
         // ════════════════════════════════════════
@@ -49,24 +46,22 @@ class DashboardController extends Controller
             $wife = User::find($sync->wife_id);
 
             if ($wife) {
-                $pregnancyWeek = $wife->getCurrentPregnancyWeek();
+                $pregnancyWeek = method_exists($wife, 'getCurrentPregnancyWeek') ? $wife->getCurrentPregnancyWeek() : 0;
 
                 $latestAssessment = HealthAssessment::where('user_id', $wife->id)
                                                     ->with('symptoms')
                                                     ->latest()
                                                     ->first();
 
-                // Gunakan nama kolom yang sesuai migration
                 $missions = DailyMission::where('user_id', $user->id)
                                         ->where('target_week', $pregnancyWeek)
                                         ->whereDate('mission_date', today())
                                         ->get();
 
-                // Gunakan nama kolom yang sesuai migration
                 $guidance = EducationalContent::where('week_start', '<=', $pregnancyWeek)
-                                              ->where('week_end', '>=', $pregnancyWeek)
-                                              ->where('is_active', true)
-                                              ->first();
+                                            ->where('week_end', '>=', $pregnancyWeek)
+                                            ->where('is_active', true)
+                                            ->first();
             }
         }
 

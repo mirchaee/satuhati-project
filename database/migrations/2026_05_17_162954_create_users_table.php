@@ -18,6 +18,9 @@ return new class extends Migration
         $table->timestamp('email_verified_at')->nullable();
         $table->string('password');
         $table->enum('role', ['istri', 'suami']);
+            
+        // TAMBAHAN FITUR PAIRING (TUGAS ANGGOTA 3)
+        $table->string('pairing_code')->nullable()->unique();
 
         // Data khusus istri
         $table->unsignedTinyInteger('pregnancy_week')->nullable();
