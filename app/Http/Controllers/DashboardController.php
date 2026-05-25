@@ -77,10 +77,10 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
-        $sync = \Illuminate\Support\Facades\DB::table('account_syncs')
+        $sync = \Illuminate\Support\Facades\DB::table('sync_data')
             ->where('husband_id', $user->id)
             ->first();
-    
+        
         $wife = null;
         if ($sync) {
             $wife = \App\Models\User::find($sync->wife_id);
@@ -108,7 +108,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
-        \Illuminate\Support\Facades\DB::table('account_syncs')
+        \Illuminate\Support\Facades\DB::table('sync_data')
             ->where('husband_id', $user->id)
             ->delete();
 
