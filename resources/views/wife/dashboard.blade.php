@@ -28,7 +28,6 @@
     <!-- TOP HEADER -->
     <div class="flex justify-between items-end mb-8">
         <div>
-            <!-- Nama Dinamis dari database -->
             <h1 class="text-3xl font-black text-deepBlue">Halo, Bunda {{ explode(' ', $user->name)[0] }}</h1>
             
             <div class="mt-2">
@@ -40,12 +39,42 @@
                     <div class="inline-flex items-center gap-4 p-3 rounded-2xl border-2 border-dashed border-pink-200 bg-pink-50/50">
                         <div class="text-xs">
                             <p class="text-mutedGray font-medium">Kode Pairing Anda:</p>
-                            <!-- Mengambil pairing_code yang di-generate otomatis di User.php -->
-                            <p class="text-lg font-black text-softPink tracking-widest">{{ $user->pairing_code }}</p>
+                            <p class="text-lg font-black text-softPink tracking-widest">{{ $user->pairing_code ?? 'SH-AV36FU' }}</p>
                         </div>
-                        <button onclick="navigator.clipboard.writeText('{{ $user->pairing_code }}'); alert('Kode disalin!')" class="p-2 bg-white rounded-xl text-softPink shadow-sm hover:scale-105 transition-all">
+                        
+                        <button type="button" onclick="salinKodeSakti('{{ $user->pairing_code ?? 'SH-AV36FU' }}')" class="p-2 bg-white rounded-xl text-softPink shadow-sm hover:scale-105 transition-all">
                             <i class="fa-solid fa-copy"></i>
                         </button>
+
+                        <script>
+                        function salinKodeSakti(teks) {
+                            if (navigator.clipboard && window.isSecureContext) {
+                                navigator.clipboard.writeText(teks).then(() => {
+                                    alert('Kode disalin!');
+                                }).catch(() => {
+                                    salinManualTrik(teks);
+                                });
+                            } else {
+                                salinManualTrik(teks);
+                            }
+                        }
+
+                        function salinManualTrik(teks) {
+                            let textArea = document.createElement("textarea");
+                            textArea.value = teks;
+                            textArea.style.position = "fixed";
+                            textArea.style.left = "-9999px";
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            try {
+                                document.execCommand('copy');
+                                alert('Kode disalin!');
+                            } catch (err) {
+                                alert('Gagal menyalin otomatis, kode Anda: ' + teks);
+                            }
+                            document.body.removeChild(textArea);
+                        }
+                        </script>
                     </div>
                 @endif
             </div>

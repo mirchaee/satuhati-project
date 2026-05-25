@@ -49,9 +49,10 @@ Route::middleware('auth')->group(function () {
      Route::get('/health-summary', [\App\Http\Controllers\AssessmentController::class, 'summary'])
          ->name('wife.health-summary'); 
      
-     Route::get('/settings', function() {
-          return "Halaman Settings Bunda (Dalam Pengembangan)";
-     })->name('wife.settings');
+     Route::get('/settings', [DashboardController::class, 'settings'])->name('wife.settings');
+     Route::put('/settings/update', [DashboardController::class, 'updateSettings'])->name('wife.settings.update');
+
+     Route::delete('/settings/disconnect', [DashboardController::class, 'disconnectHusband'])->name('wife.disconnect');
      });
 
     // ── Anggota 4 — Modul Suami ─────────────────────

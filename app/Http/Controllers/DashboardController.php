@@ -135,34 +135,64 @@ class DashboardController extends Controller
     public function settings()
     {
         $user = Auth::user();
+
+        // JIKA YANG LOGIN ADALAH SUAMI
+        if ($user->role === 'suami') {
+            $sync = \App\Models\SyncData::where('husband_id', $user->id)->first();
+            $wife = null;
+            if ($sync) {
+                $wife = User::find($sync->wife_id);
+            }
+            return view('husband.settings', compact('user', 'wife'));
+        }
         
-        $sync = \Illuminate\Support\Facades\DB::table('sync_data')
-            ->where('husband_id', $user->id)
-            ->first();
-        
-        $wife = null;
-        if ($sync) {
-            $wife = \App\Models\User::find($sync->wife_id);
+        // JIKA YANG LOGIN ADALAH ISTRI
+        if ($user->role === 'istri') {
+            $sync = \App\Models\SyncData::where('wife_id', $user->id)->first();
+            $partner = null;
+            if ($sync) {
+                $partner = User::find($sync->husband_id);
+            }
+
+            // Memastikan format HPHT dibaca sempurna oleh tag input date HTML (YYYY-MM-DD)
+            $formattedHpht = '';
+            if ($user->hpht) {
+                $formattedHpht = \Carbon\Carbon::parse($user->hpht)->format('Y-m-d');
+            }
+
+            return view('wife.settings', compact('user', 'partner', 'formattedHpht'));
         }
 
-        return view('husband.settings', compact('user', 'wife'));
+        abort(403, 'Akses ditolak.');
     }
 
     public function updateSettings(Request $request)
     {
         $user = Auth::user();
-        
         $data = $request->validate([
             'name'  => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:15',
+            'hpht'  => 'nullable|date', 
         ]);
-
+        
         $user->update($data);
+
+        if ($user->role === 'istri') {
+            return redirect()->route('wife.settings')->with('success', 'Profil Bunda berhasil diperbarui!');
+        }
 
         return redirect()->route('husband.settings')->with('success', 'Profil Papa berhasil diperbarui!');
     }
 
+    public function disconnectHusband()
+    {
+        $user = Auth::user();
+        
+        \App\Models\SyncData::where('wife_id', $user->id)->delete();
+
+        return redirect()->route('wife.settings')->with('success', 'Hubungan dengan akun Papa berhasil diputuskan.');
+    }
     public function disconnectWife()
     {
         $user = Auth::user();
