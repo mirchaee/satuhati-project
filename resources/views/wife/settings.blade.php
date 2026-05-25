@@ -64,7 +64,8 @@
                     </p>
                 </div>
 
-                <button type="submit" class="bg-primary text-white text-xs font-bold px-6 py-3 rounded-xl hover:opacity-90 transition shadow-sm">
+                <button type="submit" 
+                    class="bg-deepBlue text-white text-sm font-bold px-6 py-3 rounded-xl hover:bg-blue-900 transition shadow-md">
                     Simpan Perubahan
                 </button>
             </form>
@@ -121,7 +122,7 @@
         navigator.clipboard.writeText(kode);
         alert("Kode pairing berhasil disalin!");
     }
-    
+
     function hitungHPL() {
         const hphtVal = document.getElementById('hpht_input').value;
         if (!hphtVal) {
