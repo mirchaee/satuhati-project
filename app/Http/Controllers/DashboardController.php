@@ -134,7 +134,7 @@ class DashboardController extends Controller
     }
 
     // ========================================================
-    // ⚙️ PENGATURAN PROFIL (SUAMI & ISTRI MERGED - FIX CONFLICT)
+    // ⚙️ PENGATURAN PROFIL (SUAMI & ISTRI MERGED - CLEAN FIX)
     // ========================================================
     public function settings()
     {
@@ -142,28 +142,27 @@ class DashboardController extends Controller
 
         // JIKA YANG LOGIN ADALAH SUAMI (Modul Kaplingan Roniarta)
         if ($user->role === 'suami') {
-            $sync = SyncData::where('husband_id', $user->id)->first();
+            $sync = \App\Models\SyncData::where('husband_id', $user->id)->first();
             $wife = null;
             if ($sync) {
-                $wife = User::find($sync->wife_id);
+                $wife = \App\Models\User::find($sync->wife_id);
             }
             return view('husband.settings', compact('user', 'wife'));
         }
-        
+
         // JIKA YANG LOGIN ADALAH ISTRI (Modul Gabungan Anggota 3)
         if ($user->role === 'istri') {
-            $sync = SyncData::where('wife_id', $user->id)->first();
+            $sync = \App\Models\SyncData::where('wife_id', $user->id)->first();
             $partner = null;
             if ($sync) {
-                $partner = User::find($sync->husband_id);
+                $partner = \App\Models\User::find($sync->husband_id);
             }
-
+            
             // Memastikan format HPHT dibaca sempurna oleh tag input date HTML (YYYY-MM-DD)
             $formattedHpht = '';
             if ($user->hpht) {
                 $formattedHpht = Carbon::parse($user->hpht)->format('Y-m-d');
             }
-
             return view('wife.settings', compact('user', 'partner', 'formattedHpht'));
         }
 
@@ -173,6 +172,7 @@ class DashboardController extends Controller
     public function updateSettings(Request $request)
     {
         $user = Auth::user();
+        
         $data = $request->validate([
             'name'  => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
@@ -185,7 +185,6 @@ class DashboardController extends Controller
         if ($user->role === 'istri') {
             return redirect()->route('wife.settings')->with('success', 'Profil Bunda berhasil diperbarui!');
         }
-
         return redirect()->route('husband.settings')->with('success', 'Profil Papa berhasil diperbarui!');
     }
 
@@ -193,7 +192,7 @@ class DashboardController extends Controller
     public function disconnectHusband()
     {
         $user = Auth::user();
-        SyncData::where('wife_id', $user->id)->delete();
+        \App\Models\SyncData::where('wife_id', $user->id)->delete();
         return redirect()->route('wife.settings')->with('success', 'Hubungan dengan akun Papa berhasil diputuskan.');
     }
     
@@ -201,16 +200,15 @@ class DashboardController extends Controller
     public function disconnectWife()
     {
         $user = Auth::user();
-        SyncData::where('husband_id', $user->id)->delete();
+        \App\Models\SyncData::where('husband_id', $user->id)->delete();
         return redirect()->route('husband.settings')->with('success', 'Hubungan akun berhasil diputuskan.');
     }
 
     public function allMissions()
     {
         $user = Auth::user();
-        
-        $missions = DailyMission::where('user_id', $user->id)
-                                ->latest()
+        $missions = \App\Models\DailyMission::where('user_id', $user->id)
+                                ->orderBy('created_at', 'desc')
                                 ->get();
 
         return view('husband.missions', compact('missions'));
