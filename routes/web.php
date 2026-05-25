@@ -63,19 +63,16 @@ Route::middleware('auth')->group(function () {
      })->name('wife.settings');
      });
 
-    // Anggota 4 — Modul Suami
+    // ── Anggota 4 — Modul Suami ─────────────────────
     Route::middleware('role:suami')->group(function () {
         Route::get('/missions', fn() => view('husband.missions'))
              ->name('missions.index');
         Route::post('/missions/{mission}/complete', [\App\Http\Controllers\MissionController::class, 'complete'])
              ->name('missions.complete');
+        Route::get('/husband/settings', [DashboardController::class, 'settings'])->name('husband.settings');
+        Route::put('/husband/settings/update', [DashboardController::class, 'updateSettings'])->name('husband.settings.update');
+        Route::post('/husband/settings/disconnect', [DashboardController::class, 'disconnectWife'])->name('husband.settings.disconnect');
     });
-     Route::middleware('role:suami')->group(function () {
-          Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-          Route::get('/husband/settings', [DashboardController::class, 'settings'])->name('husband.settings');
-          Route::put('/husband/settings/update', [DashboardController::class, 'updateSettings'])->name('husband.settings.update');
-          Route::post('/husband/settings/disconnect', [DashboardController::class, 'disconnectWife'])->name('husband.settings.disconnect');
-     });
 
     // Anggota 5 — Chat & Klinik
     Route::get('/chat', fn() => view('shared.chat'))
@@ -107,9 +104,3 @@ Route::get('/test-api', function () {
         ]
     ]);
 });
-
-// Shortcut Logout (Sesuai kode awal)
-Route::post('/logout', function () {
-     \Illuminate\Support\Facades\Auth::logout();
-     return redirect('/');
- })->name('logout');
