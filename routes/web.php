@@ -35,14 +35,16 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Anggota 3 — Modul Istri
+    // ── Anggota 3 — Modul Istri ─────────────────────
     Route::middleware('role:istri')->group(function () {
         Route::get('/assessment', [AssessmentController::class, 'index'])->name('wife.assessment'); 
         Route::post('/assessment', [AssessmentController::class, 'store'])->name('wife.assessment.store');
         Route::get('/health-summary', [AssessmentController::class, 'summary'])->name('wife.health-summary'); 
-        Route::get('/settings', function() {
-            return "Halaman Settings Bunda (Dalam Pengembangan)";
-        })->name('wife.settings');
+        
+        // Rute Pengaturan Profil & Putus Hubungan Sisi Istri (Fix Bersih)
+        Route::get('/settings', [DashboardController::class, 'settings'])->name('wife.settings');
+        Route::put('/settings/update', [DashboardController::class, 'updateSettings'])->name('wife.settings.update');
+        Route::delete('/settings/disconnect', [DashboardController::class, 'disconnectHusband'])->name('wife.disconnect');
     });
 
     // ── Anggota 4 — Modul Suami ─────────────────────
@@ -55,14 +57,15 @@ Route::middleware('auth')->group(function () {
         });
         
         Route::get('/missions', [DashboardController::class, 'allMissions'])->name('missions.index');
-        
         Route::post('/missions/{id}/complete', [MissionController::class, 'complete'])->name('missions.complete');
         
+        // Rute Pengaturan Profil & Putus Hubungan Sisi Suami (Milikmu Ron)
         Route::get('/husband/settings', [DashboardController::class, 'settings'])->name('husband.settings');
         Route::put('/husband/settings/update', [DashboardController::class, 'updateSettings'])->name('husband.settings.update');
         Route::post('/husband/settings/disconnect', [DashboardController::class, 'disconnectWife'])->name('husband.settings.disconnect');
     });
 
+    // ── Rute Bersama (Shared) ────────────────────────
     Route::get('/chat', fn() => view('shared.chat'))->name('chat.index');
     Route::post('/chat/send', [ChatController::class, 'send'])->name('chat.send');
     Route::get('/clinics', fn() => view('shared.clinics'))->name('clinics.index');
@@ -75,6 +78,7 @@ Route::post('/broadcasting/auth', function () {
     return Auth::check() ? Broadcast::auth(request()) : abort(403);
 })->middleware('auth');
 
+// ── API Test ──
 Route::get('/test-api', function () {
     return response()->json([
         'status' => 'success',
@@ -84,4 +88,4 @@ Route::get('/test-api', function () {
             'framework' => 'Laravel'
         ]
     ]);
-});]
+});
