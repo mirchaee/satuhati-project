@@ -8,8 +8,6 @@ use Illuminate\Support\Facades\Auth;
 
 class MissionController extends Controller
 {
-    // Tampilkan misi harian suami
-    // TODO Anggota 4: buat view husband.missions
     public function index()
     {
         $missions = Auth::user()
@@ -20,16 +18,27 @@ class MissionController extends Controller
         return view('husband.missions', compact('missions'));
     }
 
-    // Tandai misi selesai
-    public function complete(DailyMission $mission)
+    public function complete($id)
     {
-        // Pastikan misi milik user yang login
-        if ($mission->user_id !== Auth::id()) {
-            abort(403);
+        $mission = DailyMission::where('id', $id)
+                               ->where('user_id', Auth::id())
+                               ->first();
+
+        if (!$mission) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Misi tidak ditemukan atau Anda tidak memiliki akses.'
+            ], 404);
         }
 
-        $mission->update(['is_completed' => true]);
+        $mission->update([
+            'is_completed' => true,
+            'completed_at' => now()
+        ]);
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Misi berhasil diselesaikan! Mantap Papa.'
+        ]);
     }
 }
