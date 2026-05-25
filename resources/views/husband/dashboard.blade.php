@@ -4,23 +4,30 @@
     @if(!$wife)
         <div class="bg-white rounded-[32px] p-12 text-center w-full max-w-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center animate-fadeIn">
             
-            <div class="w-16 h-16 bg-[#DCEAFE] rounded-full flex items-center justify-center mb-6 text-2xl text-primary shadow-sm shrink-0">
+            <div class="w-16 h-16 bg-[#DCEAFE] text-[#1D3557] rounded-full flex items-center justify-center mb-6 text-2xl shadow-sm shrink-0">
                 🔒
             </div>
             
-            <h2 class="text-2xl font-black text-primary mb-3 uppercase tracking-tight">Akun Belum Terhubung</h2>
-            <p class="text-gray-400 mb-8 text-sm max-w-sm leading-relaxed font-medium">
+            <h2 class="text-2xl font-black text-[#1D3557] mb-3 uppercase tracking-tight">Akun Belum Terhubung</h2>
+            <p class="text-gray-400 mb-6 text-sm max-w-sm leading-relaxed font-medium">
                 Silakan masukkan Kode Unik dari aplikasi SatuHati milik Istri Anda untuk mensinkronisasikan data perkembangan janin.
             </p>
+
+            @error('pairing_code')
+                <div class="w-full max-w-md mb-6 p-4 bg-red-50 text-red-600 border border-red-100 rounded-2xl text-xs font-bold text-center animate-fadeIn">
+                    ❌ {{ $message }}
+                </div>
+            @enderror
             
             <form action="{{ route('sync.pair') }}" method="POST" class="w-full max-w-md flex items-center gap-3">
                 @csrf
                 <div class="relative flex-1">
                     <input type="text" name="pairing_code" required placeholder="CONTOH: SH-XXXX" 
-                           class="w-full h-14 bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 outline-none focus:border-primary focus:bg-white uppercase text-center font-bold tracking-widest text-primary text-sm transition-all placeholder:text-gray-300 placeholder:font-normal">
+                           value="{{ old('pairing_code') }}"
+                           class="w-full h-14 bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 outline-none focus:border-[#1D3557] focus:bg-white uppercase text-center font-black tracking-widest text-[#1D3557] text-sm transition-all placeholder:text-gray-300 placeholder:font-normal shadow-inner">
                 </div>
                 
-                <button type="submit" class="h-14 bg-primary text-white px-8 rounded-2xl font-bold hover:opacity-90 transition-all duration-300 tracking-wide text-sm shadow-md shadow-blue-950/10 whitespace-nowrap shrink-0">
+                <button type="submit" class="h-14 bg-[#1D3557] text-white px-8 rounded-2xl font-bold hover:bg-[#294A6D] hover:shadow-lg hover:shadow-blue-900/20 active:scale-95 transition-all duration-300 tracking-wide text-sm whitespace-nowrap shrink-0 flex items-center justify-center">
                     Hubungkan
                 </button>
             </form>
