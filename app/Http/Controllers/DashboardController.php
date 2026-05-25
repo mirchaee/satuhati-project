@@ -8,7 +8,7 @@ use App\Models\SyncData;
 use App\Models\HealthAssessment;
 use App\Models\DailyMission;
 use App\Models\EducationalContent;
-use App\Models\Symptom; // TAMBAHKAN INI UNTUK FIX UNDEFINED TYPE SYMPTOM
+use App\Models\Symptom; 
 
 class DashboardController extends Controller
 {
@@ -18,14 +18,14 @@ class DashboardController extends Controller
 
         if ($user->role === 'istri') {
             $pregnancyWeek = $user->getCurrentPregnancyWeek();
-            $fetalData = $user->getFetalData(); // Mengambil array [size, weight, length]
+            $fetalData = $user->getFetalData(); 
 
             return view('wife.dashboard', [
-                'user'           => $user,
-                'pregnancy_week' => $pregnancyWeek,
-                'fetalData'      => $fetalData, // Kirim ke view
-                'isPaired'       => $user->isPaired(),
-                // ... data lainnya (mood, water, dll)
+                'user'          => $user,
+                'week'          => $pregnancyWeek,
+                'fetalInfo'     => $fetalData,    
+                'isPaired'      => $user->isPaired(),
+                'pregnancyWeek' => $pregnancyWeek,
             ]);
         }
         
@@ -59,12 +59,11 @@ class DashboardController extends Controller
                                         ->get();
 
                 $guidance = EducationalContent::where('week_start', '<=', $pregnancyWeek)
-                                            ->where('week_end', '>=', $pregnancyWeek)
-                                            ->where('is_active', true)
-                                            ->first();
+                                              ->where('week_end', '>=', $pregnancyWeek)
+                                              ->where('is_active', true)
+                                              ->first();
             }
         }
-
         return view('husband.dashboard', compact(
             'user',
             'wife',
@@ -73,5 +72,46 @@ class DashboardController extends Controller
             'guidance',
             'pregnancyWeek'
         ));
+    }
+    public function settings()
+    {
+        $user = Auth::user();
+        
+        $sync = \Illuminate\Support\Facades\DB::table('account_syncs')
+            ->where('husband_id', $user->id)
+            ->first();
+    
+        $wife = null;
+        if ($sync) {
+            $wife = \App\Models\User::find($sync->wife_id);
+        }
+
+        return view('husband.settings', compact('user', 'wife'));
+    }
+
+    public function updateSettings(Request $request)
+    {
+        $user = Auth::user();
+        
+        $data = $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|max:15',
+        ]);
+
+        $user->update($data);
+
+        return redirect()->route('husband.settings')->with('success', 'Profil Papa berhasil diperbarui!');
+    }
+
+    public function disconnectWife()
+    {
+        $user = Auth::user();
+        
+        \Illuminate\Support\Facades\DB::table('account_syncs')
+            ->where('husband_id', $user->id)
+            ->delete();
+
+        return redirect()->route('dashboard')->with('success', 'Hubungan akun berhasil diputuskan.');
     }
 }
