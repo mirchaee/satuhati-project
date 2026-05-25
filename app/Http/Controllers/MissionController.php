@@ -8,37 +8,44 @@ use Illuminate\Support\Facades\Auth;
 
 class MissionController extends Controller
 {
-    public function index()
-    {
-        $missions = Auth::user()
-                        ->dailyMissions()
-                        ->whereDate('mission_date', today())
-                        ->get();
-
-        return view('husband.missions', compact('missions'));
-    }
-
     public function complete($id)
     {
-        $mission = DailyMission::where('id', $id)
-                               ->where('user_id', Auth::id())
-                               ->first();
+        try {
+            $mission = DailyMission::where('id', $id)
+                                   ->where('user_id', Auth::id())
+                                   ->first();
 
-        if (!$mission) {
+            if (!$mission) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Misi tidak ditemukan.'
+                ], 404);
+            }
+
+            if ($mission->is_completed) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Misi sudah selesai sebelumnya.'
+                ], 422);
+            }
+
+            $mission->update([
+                'is_completed' => true,
+                'completed_at' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Misi berhasil diselesaikan! Mantap Papa. 💪'
+            ]);
+
+        } catch (\Throwable $e) {
+            // Selalu return JSON, tidak pernah HTML
             return response()->json([
                 'success' => false,
-                'message' => 'Misi tidak ditemukan atau Anda tidak memiliki akses.'
-            ], 404);
+                'message' => 'Terjadi kesalahan server.',
+                'debug'   => config('app.debug') ? $e->getMessage() : null
+            ], 500);
         }
-
-        $mission->update([
-            'is_completed' => true,
-            'completed_at' => now()
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Misi berhasil diselesaikan! Mantap Papa.'
-        ]);
     }
 }
