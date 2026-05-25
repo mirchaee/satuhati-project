@@ -4,19 +4,23 @@
     $week = $user->getCurrentPregnancyWeek();
     $fetalInfo = $user->getFetalData(); // Mengambil data size ('Alpukat', 'Mangga', dll) dari model User
 
-    // Mapping gambar & deskripsi tetap di sini karena di model User.php belum ada
+    // Ambil nama buah dari database, lalu kecilkan hurufnya untuk dicocokkan (ex: "Alpukat" jadi "alpukat")
+    $fetalSizeName = strtolower($fetalInfo['size'] ?? '');
+
+    // MAPPING BERDASARKAN NAMA BUAH (Bukan nomor minggu lagi)
     $uiMapping = [
-        4  => ['img' => 'https://images.unsplash.com/photo-1533630664438-299718400030?q=80&w=300', 'desc' => 'Janin Bunda masih sangat kecil!'],
-        8  => ['img' => 'https://images.unsplash.com/photo-1563200059-3a39e803c407?q=80&w=300', 'desc' => 'Si kecil sudah punya jari-jari kecil.'],
-        12 => ['img' => 'https://images.unsplash.com/photo-1582719508461-905c673771fd?q=80&w=300', 'desc' => 'Si kecil sudah mulai aktif bergerak!'],
-        16 => ['img' => 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?q=80&w=300', 'desc' => 'Kulit si kecil mulai terbentuk lho.'],
-        20 => ['img' => 'https://images.unsplash.com/photo-1528825871115-3581a5387919?q=80&w=300', 'desc' => 'Pertengahan jalan! Semangat Bunda.'],
-        24 => ['img' => 'https://images.unsplash.com/photo-1553279768-865429fa0078?q=80&w=300', 'desc' => 'Si kecil sudah bisa mendengar suaramu.'],
-        32 => ['img' => 'https://images.unsplash.com/photo-1550147760-44c9966d6bc7?q=80&w=300', 'desc' => 'Wah, si kecil makin berat dan kuat!'],
-        40 => ['img' => 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?q=80&w=300', 'desc' => 'Siap-siap bertemu si buah hati!'],
+        4  => ['img' => asset('images/fetal/blueberry.jpg'),      'desc' => '...'],
+        8  => ['img' => asset('images/fetal/stroberi.jpg'),       'desc' => '...'],
+        12 => ['img' => asset('images/fetal/jeruk_nipis.jpg'),    'desc' => '...'],
+        16 => ['img' => asset('images/fetal/alpukat.jpg'),        'desc' => '...'],
+        20 => ['img' => asset('images/fetal/pisang.jpg'),         'desc' => '...'],
+        24 => ['img' => asset('images/fetal/mangga.jpg'),         'desc' => '...'],
+        28 => ['img' => asset('images/fetal/terong.jpg'),         'desc' => '...'],
+        32 => ['img' => asset('images/fetal/kelapa.jpg'),         'desc' => '...'],
+        36 => ['img' => asset('images/fetal/semangka_kecil.jpg'), 'desc' => '...'],
+        40 => ['img' => asset('images/fetal/semangka.jpg'),       'desc' => '...'],
     ];
 
-    // Cari UI pendukung (gambar & desc) yang paling mendekati minggu saat ini
     $currentUI = null;
     foreach ($uiMapping as $w => $info) {
         if ($w <= $week) $currentUI = $info;
@@ -149,7 +153,7 @@
                 <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm" 
                      x-data="{ 
                         target: 2500, 
-                        current: 1200, 
+                        current: 0, 
                         inputKustom: '',
                         tambahAir(jumlah) {
                             this.current = Math.min(this.target, this.current + parseInt(jumlah));
@@ -224,20 +228,20 @@
         <div class="col-span-12 bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
             <h3 class="text-xl font-bold text-deepBlue mb-6">Weekly Progress</h3>
             
-            <div class="relative py-8">
-                <div class="absolute top-1/2 w-full h-2 bg-slate-100 -translate-y-1/2 rounded-full"></div>
+            <div class="relative pt-4 pb-16">
+                <div class="absolute top-5 w-full h-2 bg-slate-100 -translate-y-1/2 rounded-full"></div>
                 @php
                     // Menghitung persentase progres (Minggu saat ini / 40 minggu)
                     $currentWeek = Auth::user()->getCurrentPregnancyWeek();
                     $progressPercent = ($currentWeek / 40) * 100;
                 @endphp
-                <div class="absolute top-1/2 h-2 bg-deepBlue -translate-y-1/2 rounded-full transition-all duration-1000" 
+                <div class="absolute top-5 h-2 bg-deepBlue -translate-y-1/2 rounded-full transition-all duration-1000" 
                     style="width: {{ $progressPercent }}%"></div>
-                <div class="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" 
+                <div class="absolute top-5 -translate-x-1/2 -translate-y-1/2" 
                     style="left: {{ $progressPercent }}%">
                     <div class="w-6 h-6 bg-white border-4 border-deepBlue rounded-full shadow-lg"></div>
                 </div>
-                <div class="flex justify-between text-[10px] font-black text-mutedGray mt-4 uppercase">
+                <div class="flex justify-between text-xs font-black text-mutedGray mt-8 uppercase">
                     <span>Minggu 1</span>
                     <span class="text-deepBlue">Minggu {{ $week }} (Today)</span>
                     <span>Minggu 40</span>

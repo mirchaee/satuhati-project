@@ -110,8 +110,8 @@ class User extends Authenticatable
         $week = $this->getCurrentPregnancyWeek();
 
         $data = [
-            4  => ['size' => 'Biji Wijen',   'weight' => '<1g',   'length' => '0.4cm'],
-            8  => ['size' => 'Kacang Merah', 'weight' => '1g',    'length' => '1.6cm'],
+            4  => ['size' => 'Bluberi',    'weight' => '0.5g',  'length' => '0.2cm'],
+            8  => ['size' => 'Stroberi',     'weight' => '1g', 'length' => '1.6cm'],
             12 => ['size' => 'Jeruk Nipis',  'weight' => '14g',   'length' => '5.4cm'],
             16 => ['size' => 'Alpukat',      'weight' => '100g',  'length' => '11.6cm'],
             20 => ['size' => 'Pisang',       'weight' => '300g',  'length' => '16.4cm'],
