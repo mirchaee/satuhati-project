@@ -20,10 +20,8 @@ class SyncController extends Controller
             'sync'        => $sync,
             'isPaired'    => $user->isPaired(),
             'partner'     => $user->getPairedPartner(),
-            // Kode hanya tampil untuk istri
-            'pairingCode' => $user->role === 'istri'
-                                ? $sync?->pairing_code
-                                : null,
+            
+            'pairingCode' => $user->role === 'istri' ? $user->pairing_code : null,
         ]);
     }
 
@@ -39,54 +37,59 @@ class SyncController extends Controller
 
         $user = Auth::user();
 
-        // Guard: hanya suami yang bisa input kode
         if ($user->role !== 'suami') {
             return back()->withErrors([
                 'pairing_code' => 'Hanya suami yang bisa memasukkan kode pasangan.'
             ]);
         }
 
-        // Guard: suami yang sudah paired tidak bisa pair lagi
         if ($user->isPaired()) {
             return back()->withErrors([
                 'pairing_code' => 'Kamu sudah terhubung dengan pasangan.'
             ]);
         }
 
-        // Cari kode yang valid:
-        // - kode harus ada
-        // - belum ada suami (husband_id null)
-        // - status masih false (pending)
-        $sync = SyncData::where('pairing_code', strtoupper($request->pairing_code))
-                        ->whereNull('husband_id')
-                        ->where('status', false)
-                        ->first();
-
-        if (!$sync) {
+        $wifeUser = \App\Models\User::where('pairing_code', strtoupper($request->pairing_code))
+                                    ->where('role', 'istri')
+                                    ->first();
+        if (!$wifeUser) {
             return back()->withErrors([
-                'pairing_code' => 'Kode tidak valid, sudah digunakan, atau tidak ditemukan.'
+                'pairing_code' => 'Kode tidak valid atau tidak ditemukan.'
+            ]);
+        }
+        $sync = \Illuminate\Support\Facades\DB::table('sync_data')
+            ->where('wife_id', $wifeUser->id)
+            ->first();
+
+        if ($sync && $sync->status) {
+            return back()->withErrors([
+                'pairing_code' => 'Kode ini sudah digunakan oleh akun lain.'
+            ]);
+        }
+        if ($sync) {
+            \Illuminate\Support\Facades\DB::table('sync_data')
+                ->where('id', $sync->id)
+                ->update([
+                    'husband_id' => $user->id,
+                    'status'     => true,
+                    'paired_at'  => now(),
+                    'updated_at' => now(),
+                ]);
+        } else {
+            \Illuminate\Support\Facades\DB::table('sync_data')->insert([
+                'wife_id'      => $wifeUser->id,
+                'husband_id'   => $user->id,
+                'pairing_code' => $wifeUser->pairing_code,
+                'status'       => true,
+                'paired_at'    => now(),
+                'created_at'   => now(),
+                'updated_at'   => now(),
             ]);
         }
 
-        // Pastikan tidak pair dengan diri sendiri
-        if ($sync->wife_id === $user->id) {
-            return back()->withErrors([
-                'pairing_code' => 'Kamu tidak bisa terhubung dengan akunmu sendiri.'
-            ]);
-        }
-
-        // ⭐ UPDATE — hubungkan suami ke istri
-        $sync->update([
-            'husband_id' => $user->id,
-            'status'     => true,
-            'paired_at'  => now(),
-        ]);
-
-        return redirect()
-            ->route('dashboard')
-            ->with('success', '✅ Berhasil terhubung! Selamat mendampingi perjalanan kehamilan.');
+        return redirect()->route('dashboard')
+            ->with('success', 'Berhasil terhubung! Selamat mendampingi perjalanan kehamilan.');
     }
-
     // ════════════════════════════════════════
     //  REGENERATE — Istri buat kode baru
     // ════════════════════════════════════════
