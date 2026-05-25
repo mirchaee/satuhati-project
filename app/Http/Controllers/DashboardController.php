@@ -103,9 +103,7 @@ class DashboardController extends Controller
                         ]);
                     }
                 }
-
                 $missions = DailyMission::where('user_id', $user->id)
-                                        ->where('target_week', $pregnancyWeek)
                                         ->whereDate('mission_date', today())
                                         ->get();
 
