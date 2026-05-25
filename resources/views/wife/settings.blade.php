@@ -99,10 +99,10 @@
                 <div class="inline-flex items-center gap-4 p-3 rounded-2xl border-2 border-dashed border-pink-200 bg-pink-50/50">
                     <div class="text-xs">
                         <p class="text-mutedGray font-medium">Kode Pairing Anda:</p>
-                        <p class="text-lg font-black text-softPink tracking-widest">{{ $user->pairing_code ?? 'SH-AV36FU' }}</p>
+                        <p class="text-lg font-black text-softPink tracking-widest">{{ $user->pairing_code ?? '-' }}</p>
                     </div>
                     
-                    <button type="button" onclick="salinKodeSakti('{{ $user->pairing_code ?? 'SH-AV36FU' }}')" class="p-2 bg-white rounded-xl text-softPink shadow-sm hover:scale-105 transition-all">
+                    <button type="button" onclick="salinKodeSakti('{{ $user->pairing_code ?? '' }}')" class="p-2 bg-white rounded-xl text-softPink shadow-sm hover:scale-105 transition-all">
                         <i class="fa-solid fa-copy"></i>
                     </button>
                 </div>
@@ -112,6 +112,16 @@
 </div>
 
 <script>
+    function salinKodeSakti(kode) {
+        if (!kode) {
+            alert("Kode pairing belum tersedia.");
+            return;
+        }
+
+        navigator.clipboard.writeText(kode);
+        alert("Kode pairing berhasil disalin!");
+    }
+    
     function hitungHPL() {
         const hphtVal = document.getElementById('hpht_input').value;
         if (!hphtVal) {

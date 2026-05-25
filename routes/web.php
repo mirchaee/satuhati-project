@@ -41,7 +41,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/assessment', [AssessmentController::class, 'store'])->name('wife.assessment.store');
         Route::get('/health-summary', [AssessmentController::class, 'summary'])->name('wife.health-summary'); 
         
-        // Rute Pengaturan & Putus Hubungan Istri milikmu yang sudah fix
+        // Rute Pengaturan Profil & Putus Hubungan Sisi Istri (Fix Bersih)
         Route::get('/settings', [DashboardController::class, 'settings'])->name('wife.settings');
         Route::put('/settings/update', [DashboardController::class, 'updateSettings'])->name('wife.settings.update');
         Route::delete('/settings/disconnect', [DashboardController::class, 'disconnectHusband'])->name('wife.disconnect');
@@ -59,6 +59,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/missions', [DashboardController::class, 'allMissions'])->name('missions.index');
         Route::post('/missions/{id}/complete', [MissionController::class, 'complete'])->name('missions.complete');
         
+        // Rute Pengaturan Profil & Putus Hubungan Sisi Suami (Milikmu Ron)
         Route::get('/husband/settings', [DashboardController::class, 'settings'])->name('husband.settings');
         Route::put('/husband/settings/update', [DashboardController::class, 'updateSettings'])->name('husband.settings.update');
         Route::post('/husband/settings/disconnect', [DashboardController::class, 'disconnectWife'])->name('husband.settings.disconnect');

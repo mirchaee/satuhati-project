@@ -10,6 +10,7 @@ use App\Models\HealthAssessment;
 use App\Models\DailyMission;
 use App\Models\EducationalContent;
 use App\Models\Symptom; 
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -50,6 +51,8 @@ class DashboardController extends Controller
         if ($sync) {
             $wife = User::find($sync->wife_id);
 
+            $today = Carbon::today();
+
             if ($wife) {
                 $pregnancyWeek = method_exists($wife, 'getCurrentPregnancyWeek') ? $wife->getCurrentPregnancyWeek() : 0;
 
@@ -57,8 +60,6 @@ class DashboardController extends Controller
                                                     ->with('symptoms')
                                                     ->latest()
                                                     ->first();
-
-                $today = \Carbon\Carbon::today();
 
                 $hasMissionsToday = DailyMission::where('user_id', $user->id)
                                     ->whereDate('created_at', $today)
@@ -103,9 +104,10 @@ class DashboardController extends Controller
                         ]);
                     }
                 }
+
                 $missions = DailyMission::where('user_id', $user->id)
-                                        ->whereDate('mission_date', today())
-                                        ->get();
+                            ->whereDate('created_at', $today)
+                            ->get();
 
                 $completedCount  = $missions->where('is_completed', true)->count();
                 $totalCount      = $missions->count();
@@ -131,13 +133,16 @@ class DashboardController extends Controller
         ));
     }
 
+    // ========================================================
+    // ⚙️ PENGATURAN PROFIL (SUAMI & ISTRI MERGED - FIX CONFLICT)
+    // ========================================================
     public function settings()
     {
         $user = Auth::user();
 
-        // JIKA YANG LOGIN ADALAH SUAMI
+        // JIKA YANG LOGIN ADALAH SUAMI (Modul Kaplingan Roniarta)
         if ($user->role === 'suami') {
-            $sync = \App\Models\SyncData::where('husband_id', $user->id)->first();
+            $sync = SyncData::where('husband_id', $user->id)->first();
             $wife = null;
             if ($sync) {
                 $wife = User::find($sync->wife_id);
@@ -145,9 +150,9 @@ class DashboardController extends Controller
             return view('husband.settings', compact('user', 'wife'));
         }
         
-        // JIKA YANG LOGIN ADALAH ISTRI
+        // JIKA YANG LOGIN ADALAH ISTRI (Modul Gabungan Anggota 3)
         if ($user->role === 'istri') {
-            $sync = \App\Models\SyncData::where('wife_id', $user->id)->first();
+            $sync = SyncData::where('wife_id', $user->id)->first();
             $partner = null;
             if ($sync) {
                 $partner = User::find($sync->husband_id);
@@ -156,7 +161,7 @@ class DashboardController extends Controller
             // Memastikan format HPHT dibaca sempurna oleh tag input date HTML (YYYY-MM-DD)
             $formattedHpht = '';
             if ($user->hpht) {
-                $formattedHpht = \Carbon\Carbon::parse($user->hpht)->format('Y-m-d');
+                $formattedHpht = Carbon::parse($user->hpht)->format('Y-m-d');
             }
 
             return view('wife.settings', compact('user', 'partner', 'formattedHpht'));
@@ -184,24 +189,22 @@ class DashboardController extends Controller
         return redirect()->route('husband.settings')->with('success', 'Profil Papa berhasil diperbarui!');
     }
 
+    // Aksi Putus Hubungan dari Sisi Istri
     public function disconnectHusband()
     {
         $user = Auth::user();
-        
-        \App\Models\SyncData::where('wife_id', $user->id)->delete();
-
+        SyncData::where('wife_id', $user->id)->delete();
         return redirect()->route('wife.settings')->with('success', 'Hubungan dengan akun Papa berhasil diputuskan.');
     }
+    
+    // Aksi Putus Hubungan dari Sisi Suami (Mengamankan kodingan lamamu, Ron)
     public function disconnectWife()
     {
         $user = Auth::user();
-        
-        \Illuminate\Support\Facades\DB::table('sync_data')
-            ->where('husband_id', $user->id)
-            ->delete();
-
-        return redirect()->route('dashboard')->with('success', 'Hubungan akun berhasil diputuskan.');
+        SyncData::where('husband_id', $user->id)->delete();
+        return redirect()->route('husband.settings')->with('success', 'Hubungan akun berhasil diputuskan.');
     }
+
     public function allMissions()
     {
         $user = Auth::user();
