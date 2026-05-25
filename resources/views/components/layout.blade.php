@@ -40,7 +40,7 @@
             <nav class="flex-1 px-4 mt-4 space-y-2">
                 <!-- Menu Dashboard -->
                 <a href="/dashboard" 
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {{ request()->is('dashboard') ? 'bg-slate-50 text-deepBlue font-semibold border-r-4 border-deepBlue shadow-sm' : 'text-mutedGray hover:bg-slate-50 hover:text-deepBlue' }}">
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {{ (request()->is('dashboard') || request()->is('*dashboard*')) ? 'bg-slate-50 text-deepBlue font-semibold border-r-4 border-deepBlue shadow-sm' : 'text-mutedGray hover:bg-slate-50 hover:text-deepBlue' }}">
                     <i class="fa-solid fa-grip-vertical w-5"></i> Beranda
                 </a>
 
@@ -62,9 +62,11 @@
                     <i class="fa-solid fa-star-of-life animate-pulse text-sm"></i> DARURAT
                 </button>
                 <div class="border-t border-gray-100 pt-4 space-y-2 text-sm">
-                    <a href="{{ route('wife.settings') }}" class="flex items-center gap-3 px-4 py-2 text-mutedGray hover:text-deepBlue transition-all">
+                    
+                    <a href="{{ auth()->user()->role === 'suami' ? route('husband.settings') : route('wife.settings') }}" class="flex items-center gap-3 px-4 py-2 text-mutedGray hover:text-deepBlue transition-all">
                         <i class="fa-solid fa-gear"></i> Pengaturan
                     </a>
+                    
                     <form action="{{ route('logout') }}" method="POST" id="logout-form" class="hidden">
                         @csrf
                     </form>
@@ -138,10 +140,15 @@
                     <!-- PROFILE SECTION -->
                     <div class="flex items-center gap-3 border-l pl-6 border-gray-100 text-right">
                         <div>
-                            <p class="text-sm font-bold text-deepBlue leading-none">Bunda {{ explode(' ', auth()->user()->name)[0] }}</p>
-                            <p class="text-[11px] text-mutedGray font-medium mt-1">{{ auth()->user()->getCurrentPregnancyWeek() }} Weeks Pregnant</p>
+                            @if(auth()->user()->role === 'istri')
+                                <p class="text-sm font-bold text-deepBlue leading-none">Bunda {{ explode(' ', auth()->user()->name)[0] }}</p>
+                                <p class="text-[11px] text-mutedGray font-medium mt-1">{{ auth()->user()->getCurrentPregnancyWeek() }} Weeks Pregnant</p>
+                            @else
+                                <p class="text-sm font-bold text-deepBlue leading-none">Papa {{ explode(' ', auth()->user()->name)[0] }}</p>
+                                <p class="text-[11px] text-mutedGray font-medium mt-1">Pendamping Siaga</p>
+                            @endif
                         </div>
-                        <img src="https://ui-avatars.com/api/?name={{ auth()->user()->name }}&background=EC4899&color=fff" class="w-10 h-10 rounded-xl" alt="Profile">
+                        <img src="https://ui-avatars.com/api/?name={{ auth()->user()->name }}&background={{ auth()->user()->role === 'istri' ? 'EC4899' : '1D3557' }}&color=fff" class="w-10 h-10 rounded-xl" alt="Profile">
                     </div>
                 </div>
             </header>
