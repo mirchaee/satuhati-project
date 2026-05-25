@@ -13,7 +13,7 @@ class AssessmentController extends Controller
     // TODO Anggota 3: buat view wife.assessment
     public function index()
     {
-        $symptoms = Symptom::all(); // daftar gejala untuk pilihan
+        $symptoms = Symptom::all(); 
         return view('wife.assessment', compact('symptoms'));
     }
 
@@ -22,23 +22,25 @@ class AssessmentController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'mood_status'      => 'required|string|max:50',
+            'mood'             => 'required|string',
             'symptoms'         => 'nullable|array',
             'symptoms.*'       => 'exists:symptoms,id',
-            'pain_scale'       => 'nullable|integer|min:1|max:10',
-            'notes'            => 'nullable|string|max:500',
-            'weight_kg'        => 'nullable|numeric',
-            'blood_pressure'   => 'nullable|string|max:10',
+            'pain_scale'       => 'required|integer|min:0|max:10',
+            'blood_pressure'   => 'nullable|string',
             'fetal_heart_rate' => 'nullable|integer',
+            'weight_kg'        => 'nullable|numeric',
+            'notes'            => 'nullable|string',
+            'pusing_detail'    => 'nullable|string',
         ]);
 
+        $user = Auth::user();
         // Kalkulasi risiko — TODO Anggota 3 lengkapi logikanya
         [$riskScore, $riskLevel] = $this->calculateRisk($data);
 
-        $assessment = Auth::user()->healthAssessments()->create([
-            'mood_status'      => $data['mood_status'],
+        $assessment = $user->healthAssessments()->create([
+            'mood_status'      => $data['mood'],
             'notes'            => $data['notes'] ?? null,
-            'pain_scale'       => $data['pain_scale'] ?? null,
+            'pain_scale'       => $data['pain_scale'] ?? 0,
             'weight_kg'        => $data['weight_kg'] ?? null,
             'blood_pressure'   => $data['blood_pressure'] ?? null,
             'fetal_heart_rate' => $data['fetal_heart_rate'] ?? null,
@@ -53,10 +55,9 @@ class AssessmentController extends Controller
 
         // TODO Anggota 5: broadcast ke suami via Pusher/Reverb
 
-        return response()->json([
+        return redirect()->route('wife.health-summary')->with([
             'success'    => true,
             'risk_level' => $riskLevel,
-            'risk_score' => $riskScore,
             'message'    => $this->getRiskMessage($riskLevel),
         ]);
     }
@@ -66,7 +67,7 @@ class AssessmentController extends Controller
     public function summary()
     {
         $user        = Auth::user();
-        $assessments = $user->healthAssessments()->take(10)->get();
+        $assessments = $user->healthAssessments()->latest()->take(10)->get();
         $latest      = $assessments->first();
 
         return view('wife.health-summary', compact('assessments', 'latest', 'user'));
@@ -75,45 +76,50 @@ class AssessmentController extends Controller
     private function calculateRisk(array $data): array
     {
         $score = 0;
+        $forceBahaya = false;
 
-        // Mood scoring
-        $moodScores = [
-            'Senang' => 0,  'Baik'  => 0,
-            'Biasa'  => 10, 'Cemas' => 20,
-            'Lelah'  => 15, 'Sedih' => 25,
-            'Panik'  => 35,
-        ];
-        $score += $moodScores[$data['mood_status']] ?? 10;
+        // Scoring Mood
+        $moodWeights = ['sad' => 25, 'neutral' => 10, 'happy' => 0, 'excited' => 0];
+        $score += $moodWeights[$data['mood']] ?? 10;
 
-        // Symptom scoring — ambil bobot dari DB
+        // Scoring Gejala & Check Critical Status
         if (!empty($data['symptoms'])) {
             $symptoms = Symptom::whereIn('id', $data['symptoms'])->get();
             foreach ($symptoms as $symptom) {
                 $score += $symptom->weight;
-                if ($symptom->is_critical) $score += 20;
+                if ($symptom->is_critical) $forceBahaya = true;
             }
         }
 
-        // Pain scale scoring
+        // Logika Adaptif (Preeklampsia Check dari input JS)
+        if (isset($data['pusing_detail']) && $data['pusing_detail'] === 'ya_bahaya') {
+            $forceBahaya = true;
+            $score += 50;
+        }
+
+        // Vital Signs Scoring
         $pain = $data['pain_scale'] ?? 0;
-        if ($pain >= 7)      $score += 30;
-        elseif ($pain >= 4)  $score += 15;
+        $fhr = $data['fetal_heart_rate'] ?? 140;
 
+        if ($pain >= 7 || $fhr < 120 || $fhr > 160) {
+            $forceBahaya = true;
+        }
+
+        // Penentuan Level
         $level = match(true) {
-            $score >= 60 => 'Bahaya',
-            $score >= 30 => 'Waspada',
-            default      => 'Aman',
+            $forceBahaya || $score >= 60 => 'Bahaya',
+            $score >= 30 || $pain >= 4   => 'Waspada', 
+            default                      => 'Aman',
         };
-
         return [min($score, 100), $level];
     }
 
     private function getRiskMessage(string $level): string
     {
         return match($level) {
-            'Aman'    => 'Kondisimu baik-baik saja hari ini! Tetap jaga kesehatan ya, Bunda. 💚',
-            'Waspada' => 'Ada beberapa gejala yang perlu diperhatikan. Istirahat yang cukup dan informasikan ke suami. 💛',
-            'Bahaya'  => 'Suami dan fasilitas kesehatan terdekat sudah diberitahu. Segera hubungi dokter! 🚨',
+            'Aman'    => 'Kondisi Bunda terpantau stabil dan aman. Sehat selalu ya! 💚',
+            'Waspada' => 'Ada beberapa indikasi yang perlu diperhatikan. Jangan terlalu lelah ya, Bunda. 💛',
+            'Bahaya'  => 'Peringatan! Kondisi memerlukan perhatian medis. Papa sudah kami beri notifikasi. 🚨',
         };
     }
 }
