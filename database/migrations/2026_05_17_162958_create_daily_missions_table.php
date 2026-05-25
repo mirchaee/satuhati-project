@@ -23,7 +23,7 @@ return new class extends Migration
         $table->text('description')->nullable();
         $table->boolean('is_completed')->default(false);
         $table->date('mission_date');
-
+        $table->timestamp('completed_at')->nullable();
         // Misi disesuaikan dengan usia kandungan berapa
         $table->unsignedTinyInteger('target_week')->nullable();
 
