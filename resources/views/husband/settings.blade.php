@@ -53,7 +53,7 @@
                         <div class="w-10 h-10 bg-softPink text-white rounded-full flex items-center justify-center text-sm">🤰</div>
                         <div>
                             <p class="text-xs font-bold text-primary">Terhubung dengan Bunda</p>
-                            <p class="text-[11px] text-gray-500 font-medium">{{ $wife->name }} ({{ $wife->email British }})</p>
+                            <p class="text-[11px] text-gray-500 font-medium">{{ $wife->name }} ({{ $wife->email }})</p>
                         </div>
                     </div>
                     
