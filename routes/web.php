@@ -3,9 +3,13 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\SyncController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MissionController;
+use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\EmergencyController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth; // TAMBAHKAN INI
-use Illuminate\Support\Facades\Broadcast; // TAMBAHKAN INI
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Broadcast;
 
 // ── Root ────────────────────────────────────────
 Route::get('/', function () {
@@ -14,12 +18,10 @@ Route::get('/', function () {
 
 // ── Auth (hanya untuk tamu / belum login) ───────
 Route::middleware('guest')->group(function () {
-    Route::get('/register', [AuthController::class, 'showRegister'])
-         ->name('register');
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 
-    Route::get('/login', [AuthController::class, 'showLogin'])
-         ->name('login');
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
 });
 
@@ -31,67 +33,51 @@ Route::post('/logout', [AuthController::class, 'logout'])
 // ── Protected (harus login) ─────────────────────
 Route::middleware('auth')->group(function () {
 
-    // Dashboard — controller akan redirect by role
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-         ->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Sync / Pairing
-    
-
-    // Anggota 3 — Modul Istri
-     Route::middleware('role:istri')->group(function () {
-     Route::get('/assessment', [\App\Http\Controllers\AssessmentController::class, 'index'])
-         ->name('wife.assessment'); 
-
-     Route::post('/assessment', [\App\Http\Controllers\AssessmentController::class, 'store'])
-          ->name('wife.assessment.store');
-         
-     Route::get('/health-summary', [\App\Http\Controllers\AssessmentController::class, 'summary'])
-         ->name('wife.health-summary'); 
-     
-     Route::get('/settings', [DashboardController::class, 'settings'])->name('wife.settings');
-     Route::put('/settings/update', [DashboardController::class, 'updateSettings'])->name('wife.settings.update');
-
-     Route::delete('/settings/disconnect', [DashboardController::class, 'disconnectHusband'])->name('wife.disconnect');
-     });
+    // ── Anggota 3 — Modul Istri ─────────────────────
+    Route::middleware('role:istri')->group(function () {
+        Route::get('/assessment', [AssessmentController::class, 'index'])->name('wife.assessment'); 
+        Route::post('/assessment', [AssessmentController::class, 'store'])->name('wife.assessment.store');
+        Route::get('/health-summary', [AssessmentController::class, 'summary'])->name('wife.health-summary'); 
+        
+        // Rute Pengaturan & Putus Hubungan Istri milikmu yang sudah fix
+        Route::get('/settings', [DashboardController::class, 'settings'])->name('wife.settings');
+        Route::put('/settings/update', [DashboardController::class, 'updateSettings'])->name('wife.settings.update');
+        Route::delete('/settings/disconnect', [DashboardController::class, 'disconnectHusband'])->name('wife.disconnect');
+    });
 
     // ── Anggota 4 — Modul Suami ─────────────────────
-     Route::middleware('role:suami')->group(function () {
-          Route::prefix('sync')->name('sync.')->group(function () {
-               Route::get('/', [SyncController::class, 'index'])->name('index');
-               Route::post('/pair', [SyncController::class, 'pair'])->name('pair');
-               Route::post('/regenerate', [SyncController::class, 'regenerate'])->name('regenerate');
-               Route::post('/disconnect', [SyncController::class, 'disconnect'])->name('disconnect');
-          });
-          Route::get('/missions', [DashboardController::class, 'allMissions'])->name('missions.index');
-          
-          Route::post('/missions/{id}/complete', [\App\Http\Controllers\MissionController::class, 'complete'])->name('missions.complete');
-          
-          Route::get('/husband/settings', [DashboardController::class, 'settings'])->name('husband.settings');
-          Route::put('/husband/settings/update', [DashboardController::class, 'updateSettings'])->name('husband.settings.update');
-          Route::post('/husband/settings/disconnect', [DashboardController::class, 'disconnectWife'])->name('husband.settings.disconnect');
-     });
+    Route::middleware('role:suami')->group(function () {
+        Route::prefix('sync')->name('sync.')->group(function () {
+            Route::get('/', [SyncController::class, 'index'])->name('index');
+            Route::post('/pair', [SyncController::class, 'pair'])->name('pair');
+            Route::post('/regenerate', [SyncController::class, 'regenerate'])->name('regenerate');
+            Route::post('/disconnect', [SyncController::class, 'disconnect'])->name('disconnect');
+        });
+        
+        Route::get('/missions', [DashboardController::class, 'allMissions'])->name('missions.index');
+        Route::post('/missions/{id}/complete', [MissionController::class, 'complete'])->name('missions.complete');
+        
+        Route::get('/husband/settings', [DashboardController::class, 'settings'])->name('husband.settings');
+        Route::put('/husband/settings/update', [DashboardController::class, 'updateSettings'])->name('husband.settings.update');
+        Route::post('/husband/settings/disconnect', [DashboardController::class, 'disconnectWife'])->name('husband.settings.disconnect');
+    });
 
-    // Anggota 5 — Chat & Klinik
-    Route::get('/chat', fn() => view('shared.chat'))
-         ->name('chat.index');
-    Route::post('/chat/send', [\App\Http\Controllers\ChatController::class, 'send'])
-         ->name('chat.send');
-    Route::get('/clinics', fn() => view('shared.clinics'))
-         ->name('clinics.index');
+    // ── Rute Bersama (Shared) ────────────────────────
+    Route::get('/chat', fn() => view('shared.chat'))->name('chat.index');
+    Route::post('/chat/send', [ChatController::class, 'send'])->name('chat.send');
+    Route::get('/clinics', fn() => view('shared.clinics'))->name('clinics.index');
 
-    // Emergency (dipakai anggota 3 & 5)
-    Route::post('/emergency', [\App\Http\Controllers\EmergencyController::class, 'trigger'])
-         ->name('emergency.trigger');
+    Route::post('/emergency', [EmergencyController::class, 'trigger'])->name('emergency.trigger');
 });
 
 // ── Broadcasting Auth ──
 Route::post('/broadcasting/auth', function () {
-    return Auth::check()
-        ? Broadcast::auth(request()) // FIX: Gunakan Broadcast Facade
-        : abort(403);
+    return Auth::check() ? Broadcast::auth(request()) : abort(403);
 })->middleware('auth');
 
+// ── API Test ──
 Route::get('/test-api', function () {
     return response()->json([
         'status' => 'success',

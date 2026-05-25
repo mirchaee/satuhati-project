@@ -103,10 +103,9 @@ class DashboardController extends Controller
                         ]);
                     }
                 }
-
                 $missions = DailyMission::where('user_id', $user->id)
-                            ->whereDate('created_at', $today)
-                            ->get();
+                                        ->whereDate('mission_date', today())
+                                        ->get();
 
                 $completedCount  = $missions->where('is_completed', true)->count();
                 $totalCount      = $missions->count();
