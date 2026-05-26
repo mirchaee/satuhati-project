@@ -16,6 +16,7 @@ class User extends Authenticatable
         'name', 'email', 'password',
         'role', 'pregnancy_week', 'hpht',
         'phone', 'avatar', 'pairing_code',
+	'fcm_token'
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -134,5 +135,9 @@ class User extends Authenticatable
     public function getPairingCode(): ?string
 {
     return $this->syncRecord?->pairing_code;
+}
+public function notifications()
+{
+    return $this->hasMany(Notification::class);
 }
 }

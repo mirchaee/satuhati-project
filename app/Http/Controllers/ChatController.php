@@ -5,26 +5,27 @@ namespace App\Http\Controllers;
 use App\Models\ChatMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class ChatController extends Controller
 {
     // Halaman chat
-    // TODO Anggota 5: buat view shared.chat
     public function index()
     {
         $messages = Auth::user()
-                        ->chatMessages()
-                        ->orderBy('created_at')
-                        ->get();
+            ->chatMessages()
+            ->orderBy('created_at')
+            ->get();
 
         return view('shared.chat', compact('messages'));
     }
 
-    // Kirim pesan & dapat balasan bot
-    // TODO Anggota 5: integrasikan dengan AI/NLP service
+    // Kirim pesan
     public function send(Request $request)
     {
-        $request->validate(['message' => 'required|string|max:500']);
+        $request->validate([
+            'message' => 'required|string|max:500'
+        ]);
 
         $user = Auth::user();
 
@@ -35,9 +36,10 @@ class ChatController extends Controller
             'message' => $request->message,
         ]);
 
-        // TODO Anggota 5: ganti dengan AI response
-        $botReply = 'Terima kasih pesannya. Fitur chatbot sedang dalam pengembangan.';
+        // Ambil response AI
+        $botReply = $this->getAIReply($request->message);
 
+        // Simpan pesan bot
         $botMessage = ChatMessage::create([
             'user_id' => $user->id,
             'sender'  => 'bot',
@@ -49,4 +51,35 @@ class ChatController extends Controller
             'message' => $botMessage->message,
         ]);
     }
+
+    // =========================
+    // AI GROQ FUNCTION
+    // =========================
+private function getAIReply($message)
+{
+    $response = Http::withHeaders([
+        'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
+        'Content-Type'  => 'application/json',
+    ])->post('https://api.groq.com/openai/v1/chat/completions', [
+        'model' => 'llama-3.1-8b-instant',
+        'messages' => [
+            [
+                'role' => 'system',
+                'content' => 'Kamu adalah asisten kesehatan ibu hamil yang ramah dan membantu.'
+            ],
+            [
+                'role' => 'user',
+                'content' => $message
+            ]
+        ],
+        'temperature' => 0.7
+    ]);
+
+    if ($response->failed()) {
+        return "Maaf AI sedang tidak tersedia.";
+    }
+
+    return $response['choices'][0]['message']['content']
+        ?? "Tidak ada jawaban.";
+}
 }

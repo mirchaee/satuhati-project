@@ -7,6 +7,8 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "google/auth": "^1.50",
+        "kreait/firebase-php": "7.0",
         "laravel/framework": "^13.8",
         "laravel/tinker": "^3.0"
     },
@@ -80,7 +82,10 @@
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
         },
-        "disable-tls": true
+        "disable-tls": true,
+        "audit": {
+            "block-insecure": false
+        }
     },
     "minimum-stability": "stable",
     "prefer-stable": true

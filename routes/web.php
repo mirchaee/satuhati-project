@@ -7,6 +7,7 @@ use App\Http\Controllers\MissionController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\EmergencyController;
+use App\Http\Controllers\FaskesController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Broadcast;
@@ -34,6 +35,10 @@ Route::post('/logout', [AuthController::class, 'logout'])
 Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // ── FASKES ──
+    Route::get('/faskes', [FaskesController::class, 'index'])
+        ->name('faskes.index');
 
     // ── Anggota 3 — Modul Istri ─────────────────────
     Route::middleware('role:istri')->group(function () {
@@ -66,9 +71,10 @@ Route::middleware('auth')->group(function () {
     });
 
     // ── Rute Bersama (Shared) ────────────────────────
-    Route::get('/chat', fn() => view('shared.chat'))->name('chat.index');
+    Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
     Route::post('/chat/send', [ChatController::class, 'send'])->name('chat.send');
     Route::get('/clinics', fn() => view('shared.clinics'))->name('clinics.index');
+    Route::post('/save-token', [App\Http\Controllers\UserController::class, 'saveToken']);
 
     Route::post('/emergency', [EmergencyController::class, 'trigger'])->name('emergency.trigger');
 });
