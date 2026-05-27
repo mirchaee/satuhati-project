@@ -3,35 +3,34 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Notification;
 
 class EmergencyController extends Controller
 {
-    // Trigger emergency alert
-    // TODO Anggota 5: integrasikan dengan FCM/Pusher
     public function trigger(Request $request)
     {
-        $user    = Auth::user();
+        $user = auth()->user();
+
         $partner = $user->getPairedPartner();
 
         if (!$partner) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tidak ada pasangan yang terhubung.',
-            ], 400);
+                'message' => 'Pasangan tidak ditemukan'
+            ], 404);
         }
 
-        // Tandai assessment terakhir sebagai emergency
-        $latest = $user->healthAssessments()->first();
-        if ($latest) {
-            $latest->update(['is_emergency' => true]);
-        }
-
-        // TODO Anggota 5: broadcast(new EmergencyTriggered($user, $partner->id));
+        // simpan notifikasi ke database pasangan
+        Notification::create([
+            'user_id' => $partner->id,
+            'title' => '🚨 Emergency Alert',
+            'message' => $user->name . ' membutuhkan bantuan darurat!',
+            'is_read' => false,
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Notifikasi darurat telah dikirim ke suami.',
+            'message' => 'Emergency notification sent'
         ]);
     }
 }

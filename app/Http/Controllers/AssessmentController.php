@@ -54,6 +54,16 @@ class AssessmentController extends Controller
         }
 
         // TODO Anggota 5: broadcast ke suami via Pusher/Reverb
+public function saveToken(Request $request)
+{
+    auth()->user()->update([
+        'fcm_token' => $request->token
+    ]);
+
+    return response()->json([
+        'success' => true
+    ]);
+}
 
         return redirect()->route('wife.health-summary')->with([
             'success'    => true,

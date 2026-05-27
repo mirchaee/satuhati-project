@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>SatuHati - Digital Companion</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -51,16 +53,25 @@
                 </a>
 
                 <!-- Menu Chat -->
-                <a href="#" 
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {{ request()->is('chat*') ? 'bg-slate-50 text-deepBlue font-semibold border-r-4 border-deepBlue shadow-sm' : 'text-mutedGray hover:bg-slate-50 hover:text-deepBlue' }}">
-                    <i class="fa-solid fa-comment-dots w-5"></i> Obrolan AI
-                </a>
+                <a href="{{ route('chat.index') }}" 
+    			class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {{ request()->is('chat*') ? 'bg-slate-50 text-deepBlue font-semibold border-r-4 border-deepBlue shadow-sm' : 'text-mutedGray hover:bg-slate-50 hover:text-deepBlue' }}">
+    			<i class="fa-solid fa-comment-dots w-5"></i> Obrolan AI
+		</a>
+
+		<a href="{{ route('faskes.index') }}"
+   			class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all
+   			{{ request()->is('faskes*') ? 'bg-slate-50 text-deepBlue font-semibold border-r-4 border-deepBlue shadow-sm' : 'text-mutedGray hover:bg-slate-50 hover:text-deepBlue' }}">
+    
+    			<i class="fa-solid fa-map-location-dot w-5"></i>
+    			Faskes Terdekat
+		</a>
             </nav>
 
             <div class="p-4 space-y-4">
-                <button class="w-full py-3 bg-emergencyRed text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-red-100 hover:scale-[1.02] transition-all">
-                    <i class="fa-solid fa-star-of-life animate-pulse text-sm"></i> DARURAT
-                </button>
+                <button onclick="triggerEmergency()" 
+class="w-full py-3 bg-emergencyRed text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-red-100 hover:scale-[1.02] transition-all">
+    <i class="fa-solid fa-star-of-life animate-pulse text-sm"></i> DARURAT
+</button>
                 <div class="border-t border-gray-100 pt-4 space-y-2 text-sm">
                     
                     <a href="{{ auth()->user()->role === 'suami' ? route('husband.settings') : route('wife.settings') }}" class="flex items-center gap-3 px-4 py-2 text-mutedGray hover:text-deepBlue transition-all">
@@ -92,8 +103,13 @@
                 <div class="flex items-center gap-8">
                     <!-- FITUR LONCENG NOTIFIKASI (Tugas Anggota 3) -->
                     @php
-                        $alerts = auth()->user()->healthAssessments()->whereIn('risk_level', ['Bahaya', 'Waspada'])->latest()->take(5)->get();
-                        $alertCount = $alerts->count();
+                        $alerts = auth()->user()
+    			->notifications()
+    			->latest()
+    			->take(5)
+    			->get();
+
+			$alertCount = $alerts->count();
                     @endphp
 
                     <div class="relative" x-data="{ open: false }">
@@ -115,17 +131,28 @@
                             </div>
                             <div class="max-h-80 overflow-y-auto">
                                 @forelse($alerts as $alert)
-                                    <a href="/health-summary" class="flex gap-4 p-4 border-b border-gray-50 hover:bg-slate-50 transition-all">
-                                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 {{ $alert->risk_level == 'Bahaya' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-500' }}">
-                                            <i class="fa-solid {{ $alert->risk_level == 'Bahaya' ? 'fa-triangle-exclamation' : 'fa-circle-exclamation' }}"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-[11px] font-bold text-deepBlue leading-tight uppercase">Risiko {{ $alert->risk_level }} Terdeteksi!</p>
-                                            <p class="text-[10px] text-mutedGray mt-1">{{ Str::limit($alert->notes ?? 'Segera cek ringkasan kesehatan Bunda.', 60) }}</p>
-                                            <p class="text-[9px] text-gray-300 mt-2 font-bold">{{ $alert->created_at->diffForHumans() }}</p>
-                                        </div>
-                                    </a>
-                                @empty
+    <a href="#" class="flex gap-4 p-4 border-b border-gray-50 hover:bg-slate-50 transition-all">
+
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-red-50 text-red-500">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+
+        <div>
+            <p class="text-[11px] font-bold text-deepBlue leading-tight uppercase">
+                {{ $alert->title }}
+            </p>
+
+            <p class="text-[10px] text-mutedGray mt-1">
+                {{ Str::limit($alert->message, 60) }}
+            </p>
+
+            <p class="text-[9px] text-gray-300 mt-2 font-bold">
+                {{ $alert->created_at->diffForHumans() }}
+            </p>
+        </div>
+
+    </a>
+@empty
                                     <div class="p-10 text-center">
                                         <p class="text-xs text-mutedGray italic">Tidak ada peringatan baru.</p>
                                     </div>
@@ -158,5 +185,90 @@
             </div>
         </main>
     </div>
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+    getMessaging,
+    getToken
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAUuyBfigcOhGDBz-c4_nx_sBFD9By_MrE",
+    authDomain: "satuhati-d6606.firebaseapp.com",
+    projectId: "satuhati-d6606",
+    messagingSenderId: "936461098422",
+    appId: "1:936461098422:web:f15f03b8f8ff22b6d0f517"
+};
+
+const app = initializeApp(firebaseConfig);
+
+const messaging = getMessaging(app);
+
+navigator.serviceWorker.register('/firebase-messaging-sw.js')
+.then((registration) => {
+
+    console.log('SW registered:', registration);
+
+    return getToken(messaging, {
+        vapidKey: 'BGGm2pezI6hZ4kbA4aMEhakxQUE1M4goi5zgr7MrG_Z7CFL0SloqH_Dj1I9ywdS1jZc9B0CPOW07Rw-BC85hMgc',
+        serviceWorkerRegistration: registration
+    });
+
+})
+.then((currentToken) => {
+
+    console.log('TOKEN:', currentToken);
+
+    return fetch('/save-token', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            token: currentToken
+        })
+    });
+
+})
+.catch((err) => {
+    console.error(err);
+});
+
+</script>
+<script>
+window.triggerEmergency = function () {
+
+    console.log("🚨 emergency clicked");
+
+    fetch('/emergency', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        console.log(data);
+        alert(data.message);
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Gagal mengirim emergency");
+    });
+}
+</script>
+<script>
+function testNotif() {
+
+    new Notification("🚨 Emergency Alert", {
+        body: "Pasangan membutuhkan bantuan darurat!"
+    });
+
+}
+</script>
 </body>
 </html>

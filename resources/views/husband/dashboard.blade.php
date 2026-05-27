@@ -154,9 +154,14 @@
                             <button class="w-full h-12 bg-[#C82333] hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-red-100 transition-all active:scale-[0.98]">
                                 <i class="fa-solid fa-phone"></i> Hubungi Dokter
                             </button>
-                            <button class="w-full h-12 bg-white hover:bg-slate-50 text-[#C82333] border-2 border-[#C82333] rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
-                                <i class="fa-solid fa-map-location-dot"></i> Cari Faskes
-                            </button>
+                            <button 
+    				onclick="window.location='{{ route('faskes.index') }}'"
+    				class="w-full h-12 bg-white hover:bg-slate-50 text-[#C82333] border-2 border-[#C82333] rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+
+    				<i class="fa-solid fa-map-location-dot"></i> 
+    					Cari Faskes
+
+			    </button>
                         </div>
                     </div>
 
