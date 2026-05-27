@@ -20,7 +20,6 @@ class EmergencyController extends Controller
             ], 404);
         }
 
-        // simpan notifikasi ke database pasangan
         Notification::create([
             'user_id' => $partner->id,
             'title' => '🚨 Emergency Alert',
@@ -30,7 +29,7 @@ class EmergencyController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Emergency notification sent'
+            'message' => 'Notifikasi darurat telah dikirim ke suami.'
         ]);
     }
 }
