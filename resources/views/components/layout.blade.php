@@ -270,10 +270,5 @@ function testNotif() {
 
 }
 </script>
-<script>
-setInterval(() => {
-    location.reload();
-}, 10000);
-</script>
 </body>
 </html>

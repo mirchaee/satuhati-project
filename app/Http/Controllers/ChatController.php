@@ -48,7 +48,7 @@ class ChatController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $botMessage->message,
+            'message' => $botReply,
         ]);
     }
 
